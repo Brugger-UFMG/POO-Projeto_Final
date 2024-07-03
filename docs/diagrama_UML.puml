@@ -1,0 +1,333 @@
+@startuml
+!pragma useIntermediatePackages false
+
+class scripts.camera.Camera {
+  - DISPLAY_SURF: Surface
+  - MAP: Map
+  - PLAYER: Player
+  --
+  + get_offset() -> Vector2
+  + render_sprites(sprite_group: SpriteGroup[Sprite]) -> None
+  + render_sprites_y_sorted(sprite_group: SpriteGroup[Sprite]) -> None
+  + get_original_pos(pos: Vector2) -> Vector2
+  + get_offset_1D(
+      player_center: int, display_center: int, map_size: int
+  ) -> int
+}
+class scripts.sprite.SpriteGroup {
+  # item_set: set[Group_Type]
+  # internal_type: Type
+  --
+  + items() -> list[Group_Type]
+  + add(items: *Group_Type) -> None
+  + remove_internal(items: *Group_Type) -> None
+  + remove(items: *Group_Type) -> None
+  + empty() -> None
+  + has(items: *Group_Type) -> bool
+}
+class scripts.enemies.Beetle {
+  + value: int {static}
+  ..
+  # max_health: int
+  # health: int
+  # detection_range: float
+  # attack_range: float
+  # speed: float
+  # knockback_resistance: int
+  # attack_cooldown: float
+  # shot_speed: float
+  # damage: int
+  # attack_cycle: int
+  # attack_option: int
+  # attack_cycle_cooldown: float
+  # attack_cycle_time: float
+  # deffending: bool
+  # deffending_time: float
+  --
+  + update(dt: float) -> None
+  + take_damage(ammount: int, direction: Vector2) -> None
+  # check_state() -> None
+  # attack() -> bool
+  # cooldowns(dt: float) -> None
+}
+abstract class scripts.enemies.Enemy {
+  + value: int {static}
+  ..
+  + projectyles: EntityManager
+  # detection_range: float
+  # attack_range: float
+  # state: str
+  # player_dist_dir: tuple[float, Vector2]
+  # grace_time: float
+  --
+  # check_state() -> None
+  # attack() -> bool
+}
+abstract class scripts.entity.Entity {
+  + vulnerable: bool
+  # max_health: int
+  # health: int
+  # grace_time: float
+  # invulnerable_time: float
+  # knockback_resistance: int
+  # knockback: float
+  # knockback_direction: Vector2
+  # attacking: bool
+  # can_attack: bool
+  # attack_cooldown: float
+  # attack_time: float
+  # shot_speed: float
+  # damage: int
+  --
+  + check_death() -> bool
+  + take_damage(ammount: int, direction: Vector2) -> None
+  + blink()
+  # cooldowns(dt: float) -> None
+  # take_knockback(dt: float) -> None
+  # get_entity_distance_direction(
+        pos: Vector2
+    ) -> tuple[float, Vector2]
+}
+class scripts.entity.EntityManager {
+  + update(dt: float) -> None
+  + check_deaths() -> list[Entity]
+}
+class scripts.enemies.Hornet {
+  + value: int {static}
+  ..
+  # max_health: int
+  # health: int
+  # stop_range: float
+  # speed: float
+  # knockback_resistance: int
+  # attack_cooldown: float
+  # shot_speed: float
+  # damage: int
+  --
+  + update(dt: float) -> None
+  # attack() -> bool
+  
+}
+class scripts.projectyle.Projectyle {
+  # direction: Vector2
+  # speed: float
+  # damage: int
+  # targets: Entity | EntityManager
+  --
+  + update(dt: float) -> None
+  # check_hit() -> bool
+  # deal_damage(entity: Entity) -> None
+}
+class scripts.enemies.Spider {
+  + value: int {static}
+  ..
+  # max_health: int
+  # health: int
+  # detection_range: float
+  # attack_range: float
+  # stop_range: float
+  # speed: float
+  # knockback_resistance: int
+  # attack_cooldown: float
+  # shot_speed: float
+  # damage: int
+  --
+  + update(dt: float) -> None
+  # attack() -> bool
+}
+class scripts.sprite.MovingSprite {
+  + tilepos: tuple[int, int]
+  + collider: Rect
+  + hitbox: Rect
+  # game: Game
+  # direction: Vector2
+  # speed: float
+  --
+  # get_obstacles() -> set[Tile]
+  # get_entities() -> set[Entity]
+  # move(distance: float, direction: Vector2) -> bool
+  # check_hit()
+  - colision(
+     direction: Literal["vertical", "horizontal"], move_dir: Vector2
+  ) -> bool
+}
+abstract class scripts.entity.Simulated {
+  + //update(dt: float) -> None//
+}
+class scripts.game.Game {
+  + display: Surface
+  + window: Surface
+  + graphics: dict
+  + map: Map
+  + player: Player
+  + entities: EntityManager
+  + enemies: EntityManager
+  + camera: Camera
+  - score: int
+  - score_cooldown: float
+  - score_time: float
+  - game_over: bool
+  - game_over_time: float
+  --
+  + run(dt: float) -> None
+  - spawn_enemies() -> None
+  
+}
+class scripts.map.Map {
+  + size: tuple[int, int]
+  + size_pixels: tuple[int, int]
+  + width: int
+  + height: int
+  + tile_size: int
+  + foreground_tiles: SpriteGroup[Tile]
+  + background_tiles: SpriteGroup[Tile]
+  - graphics: dict[str, dict | list]
+  - WALL: str
+  - AIR: str
+  - HOLE: str
+  - border_size: int
+  - matrix_foreground: list[list[Tile | None]]
+  - matrix_background: list[list[Tile | None]]
+  --
+  + get_tile(
+        pos: tuple[int, int],
+        plane: Literal["background", "foreground"] = "foreground"
+    ) -> Tile | None
+  + get_tiles_square(
+        pos: tuple[int, int],
+        radius: int | tuple[int, int] = 1,
+        plane: Literal["background", "foreground"] = "foreground",
+    ) -> set[Tile]
+  + place_tile(
+        pos: tuple[int, int],
+        tile_code: TileCode,
+        groups: *SpriteGroup,
+        plane: Literal["background", "foreground"] = "foreground",
+        visible: bool = True,
+        collidable: bool = False,
+    ) -> None
+  + remove_tile(
+        pos: tuple[int, int],
+        plane: Literal["background", "foreground"] = "foreground",
+    ) -> None
+  + clear() -> None
+  + generate() -> None
+  - create_maze() -> list[list]
+  - smooth_maze(
+        maze: list[list],
+        ammount: int,
+        stop_air: int,
+        stop_wall: int,
+        air_neighbors: int,
+        wall_neighbors: int,
+    ) -> list[list]
+  - tilemap_maze(
+        backgorund: list[list], foreground: list[list]
+    ) -> tuple[list[list[TileCode]], list[list[TileCode]]]
+}
+class scripts.player.Player {
+  + max_health: int
+  + health: int
+  + image: Surface
+  + shot_speed: float
+  # mouse_pos: Vector2
+  # vulnerable: bool
+  # grace_time: float
+  # invulnerable_time: float
+  # speed: float
+  # knockback_resistance: int
+  # knockback: float
+  # knockback_travelled: float
+  # knockback_direction: Vector2
+  # damage: int
+  # attacking: bool
+  # can_attack: bool
+  # attack_cooldown: float
+  # attack_time: float
+  # dodging: bool
+  # dodge_released: bool
+  # dodge_cooldown: float
+  # air_time: float
+  # dodge_time: float
+  # dodge_speed: float
+  # dodge_direction: Vector2
+  --
+  + update(dt: float) -> None
+  # attack(direction: Vector2) -> None
+  # dodge(dt: float) -> None
+  # cooldowns(dt: float) -> None
+  - input() -> None
+}
+class scripts.sprite.Sprite {
+  + pos: Vector2
+  + visible: bool
+  # image: Surface
+  - groups: WeakSet
+  --
+  + add_to(
+      groups: *SpriteGroup,
+  ) -> None
+  + remove_internal(groups: *SpriteGroup) -> None
+  + remove_from(groups: *SpriteGroup) -> None
+  + list_groups() -> list[SpriteGroup]
+  + draw(
+      surface: Surface,
+      offset: Vector2 = Vector2(),
+  ) -> None
+  + kill() -> None
+  
+}
+class scripts.tile.Tile {
+  + tile_pos: tuple[int, int]
+  + collidable: bool
+  + collider: Rect
+  # map: Map
+}
+class scripts.main.Main {
+  - game_width: int {static}
+  - game_height: int {static}
+  - scale_factor: int {static}
+  - width: int {static}
+  - height: int {static}
+  ..
+  - window: Surface
+  - display: Surface
+  - clock: Clock
+  - running: bool
+  - game: Game
+  - dt: float
+  - FPS: deque
+  --
+  + run() -> None
+  - get_average_FPS() -> float
+}
+class scripts.map.TileCode {
+  + type: str
+  + variation: int
+}
+
+scripts.enemies.Enemy <|-- scripts.enemies.Beetle
+scripts.entity.Entity <|-- scripts.enemies.Enemy
+scripts.sprite.MovingSprite <|-- scripts.entity.Entity
+scripts.entity.Simulated <|-- scripts.entity.Entity
+scripts.sprite.SpriteGroup <|-- scripts.entity.EntityManager
+scripts.enemies.Enemy <|-- scripts.enemies.Hornet
+scripts.entity.Entity <|-- scripts.projectyle.Projectyle
+scripts.enemies.Enemy <|-- scripts.enemies.Spider
+scripts.sprite.Sprite <|-- scripts.sprite.MovingSprite
+scripts.entity.Entity <|-- scripts.player.Player
+scripts.sprite.Sprite <|-- scripts.tile.Tile
+
+scripts.enemies.Enemy "1..n" *-- "1..n" scripts.entity.EntityManager
+scripts.projectyle.Projectyle "1..n" *-- "1" scripts.entity.Entity
+scripts.projectyle.Projectyle "1..n" *-- "1..n" scripts.entity.EntityManager
+scripts.game.Game "1" *-- "1" scripts.map.Map
+scripts.game.Game "1" *-- "1" scripts.player.Player
+scripts.game.Game "1" *-- "1..n" scripts.entity.EntityManager
+scripts.game.Game "1" *-- "1" scripts.camera.Camera
+scripts.map.Map "1" *-- "1..n" scripts.sprite.SpriteGroup
+scripts.map.Map "1" *-- "0..n" scripts.tile.Tile
+scripts.main.Main "1" *-- "1" scripts.game.Game
+
+footer Generated by //py2puml//
+@enduml
